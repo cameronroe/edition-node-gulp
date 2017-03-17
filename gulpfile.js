@@ -6,6 +6,7 @@
 var gulp = require('gulp'),
   path = require('path'),
   browserSync = require('browser-sync').create(),
+  sass = require('gulp-sass'),
   argv = require('minimist')(process.argv.slice(2)),
   chalk = require('chalk');
 
@@ -60,6 +61,15 @@ gulp.task('pl-copy:font', function () {
 gulp.task('pl-copy:css', function () {
   return gulp.src(normalizePath(paths().source.css) + '/*.css')
     .pipe(gulp.dest(normalizePath(paths().public.css)))
+    .pipe(browserSync.stream());
+});
+
+gulp.task('pl-copy:sass', function () {
+  return gulp.src(normalizePath(paths().source.css, '**', '*.scss'))
+    .pipe(sass().on('error', sass.logError))
+    .pipe(
+      gulp.dest(normalizePath(paths().public.css))
+    )
     .pipe(browserSync.stream());
 });
 
@@ -119,7 +129,8 @@ gulp.task('pl-assets', gulp.series(
   'pl-copy:img',
   'pl-copy:favicon',
   'pl-copy:font',
-  'pl-copy:css',
+  // 'pl-copy:css',
+  'pl-copy:sass',
   'pl-copy:styleguide',
   'pl-copy:styleguide-css'
 ));
@@ -154,6 +165,7 @@ gulp.task('patternlab:installplugin', function (done) {
   patternlab.installplugin(argv.plugin);
   done();
 });
+
 
 /******************************************************
  * SERVER AND WATCH TASKS
@@ -191,9 +203,12 @@ function watch() {
   const watchers = [
     {
       name: 'CSS',
-      paths: [normalizePath(paths().source.css, '**', '*.css')],
+      paths: [
+        normalizePath(paths().source.css, '**', '*.css'),
+        normalizePath(paths().source.css, '**', '*.scss')
+      ],
       config: { awaitWriteFinish: true },
-      tasks: gulp.series('pl-copy:css', reloadCSS)
+      tasks: gulp.series('pl-copy:sass', reloadCSS)
     },
     {
       name: 'Styleguide Files',
